@@ -22,7 +22,7 @@ def listen_for_messages():
 
 threading.Thread(target=listen_for_messages).start()
 
-print(f"=== Connected as {name} ===")
+print(f"Connected as {name}")
 while True:
     text = input()
     if text.strip():
