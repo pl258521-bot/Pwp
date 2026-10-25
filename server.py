@@ -1,26 +1,26 @@
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import socket
+import threading
 
-messages = []
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('0.0.0.0', 5000))
+server.listen()
 
-class chat_system(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        chat_history = "\n".join(messages) + "\n"
-        self.wfile.write(chat_history.encode('utf-8'))
+clients = []
 
-    def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length).decode('utf-8')
-        
-        if body.strip():
-            messages.append(body.strip())
-        
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Message sent successfully!\n")
+def handle_client(client):
+    while True:
+        try:
+            message = client.recv(1024)
+            for c in clients:
+                if c != client:
+                    c.send(message)
+        except:
+            clients.remove(client)
+            client.close()
+            break
 
-if __name__ == '__main__':
-    server = HTTPServer(('0.0.0.0', 5000), chat_system)
-    print("Server running")
-    server.serve_forever()
+print("Server active")
+while True:
+    client_socket, _ = server.accept()
+    clients.append(client_socket)
+    threading.Thread(target=handle_client, args=(client_socket,)).start()
